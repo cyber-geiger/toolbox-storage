@@ -92,17 +92,17 @@ public class GenericController implements StorageController, ChangeRegistrar {
       mapper.add(new NodeImpl(userNodeName));
     }
 
-    // check if current user exists
+    // check if current device exists
     localNode = mapper.get(":Local");
     uuid = localNode.getValue("currentDevice");
     if (uuid == null) {
-      // create new default user
+      // create new default device
       uuid = new NodeValueImpl("currentDevice", UUID.randomUUID().toString());
       localNode.addValue(uuid);
       mapper.update(localNode);
     }
 
-    // check if current user node exists
+    // check if current device node exists
     String deviceNodeName = ":Devices:" + uuid.getValue();
     try {
       mapper.get(deviceNodeName);
