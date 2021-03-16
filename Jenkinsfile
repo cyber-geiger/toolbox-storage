@@ -17,7 +17,7 @@ pipeline {
 
         stage('Gradle build') {
             steps {
-                sh './gradlew clean build jar javadoc --no-daemon' 
+                sh './gradlew clean build jar javadoc'
             }
         }
 
@@ -25,7 +25,7 @@ pipeline {
             steps {
 				script{
 					try {
-						sh './gradlew test checkstyleMain --no-daemon' //run a gradle task
+						sh './gradlew clean test checkstyleMain'
 					} finally {
 						junit '**/build/test-results/test/*.xml' 
 					}
