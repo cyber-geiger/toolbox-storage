@@ -152,6 +152,7 @@ public interface Node {
   /**
    * <p>Sets the controller needed for materializing the node if required.</p>
    *
+   * @param controller the controller to be set
    * @return the previously set controller
    */
   StorageController setController(StorageController controller);

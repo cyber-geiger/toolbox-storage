@@ -2,9 +2,17 @@ plugins {
     id 'java'
     id 'checkstyle'
     id 'com.github.johnrengelman.shadow' version '6.1.0'
+    id 'maven-publish'
+    id 'signing'
 }
 
+group = 'eu.cyber-geiger'
+version = '0.3.0'
+description = 'localStorage'
+sourceCompatibility = '1.8'
+
 repositories {
+    mavenCentral()
     jcenter()
 }
 
@@ -37,11 +45,6 @@ configurations.all {
     }
 }
 
-group = 'ch.fhnw.geiger'
-version = '0.0.2-SNAPSHOT'
-description = 'localStorage'
-sourceCompatibility = '1.8'
-
 tasks.named('jar') {
     manifest {
         attributes('Implementation-Title': project.name,
@@ -61,7 +64,6 @@ tasks.withType(Checkstyle) {
         html.enabled true
     }
 }
-
 
 
 jar.dependsOn shadowJar
@@ -92,5 +94,92 @@ compileJava {
 
 java {
     withSourcesJar()
+    withJavadocJar()
 }
+
+def gitBranch() {
+    def branch = ""
+    def proc = "git rev-parse --abbrev-ref HEAD".execute()
+    proc.in.eachLine { line -> branch = line }
+    proc.err.eachLine { line -> println line }
+    proc.waitFor()
+    branch
+}
+
+artifacts {
+    archives javadocJar, sourcesJar
+}
+
+publishing {
+    repositories {
+        // The repository to publish to, Sonatype/MavenCentral
+        maven {
+            // This is an arbitrary name, you may also use "mavencentral" or
+            // any other name that's descriptive for you
+            name = "sonatype"
+
+            def releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+            def snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
+            url = gitBranch() == "main" ? releasesRepoUrl : snapshotsRepoUrl
+
+            credentials {
+                username ossrhUsername
+                password ossrhPassword
+            }
+        }
+    }
+    publications {
+        mavenJava(MavenPublication) {
+            artifactId = 'toolbox-storage'
+            from components.java
+
+            version = gitBranch() == "main" ? version : version + '-SNAPSHOT'
+
+            versionMapping {
+                usage('java-api') {
+                    fromResolutionOf('runtimeClasspath')
+                }
+                usage('java-runtime') {
+                    fromResolutionResult()
+                }
+            }
+            pom {
+                name = 'toolbox-storage'
+                description = 'The storage module of the GEIGER toolbox'
+                url = 'https://github.com/cyber-geiger/toolbox-storage'
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'mgwerder'
+                        name = 'Martin Gwerder'
+                        email = 'martin.gwerder@fhnw.ch'
+                    }
+                    developer {
+                        id = 'sleemann'
+                        name = 'Sacha Leemann'
+                        email = 'sacha.leemann@fhnw.ch'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:git://github.com/cyber-geiger/toolbox-storage.git'
+                    developerConnection = 'scm:git:ssh://github.com/cyber-geiger/toolbox-storage.git'
+                    url = 'http://github.com/cyber-geiger/toolbox-storage/'
+                }
+            }
+
+        }
+
+    }
+
+}
+
+signing {
+    sign publishing.publications.mavenJava
+}
+
 

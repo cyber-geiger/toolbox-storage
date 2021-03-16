@@ -33,7 +33,12 @@ pipeline {
             }
         }
 
-        
+        stage('Gradle publish') {
+            steps {
+                sh './gradlew -Dgradle.user.home=$HOME/.gradle publish --no-daemon'
+            }
+        }
+
     }
     post {
         always {
