@@ -1,4 +1,0 @@
-rootProject.name = 'toolbox-storage'
-include 'localstorage'
-
-
