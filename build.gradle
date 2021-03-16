@@ -1,14 +1,17 @@
 plugins {
     id 'java'
     id 'checkstyle'
+    id 'com.github.johnrengelman.shadow' version '6.1.0'
     id 'maven-publish'
+    id 'signing'
 }
 
 group 'eu.cyber-geiger'
-version '0.1-SNAPSHOT'
+version = '0.3.0'
 
 repositories {
     mavenCentral()
+    jcenter()
 }
 
 dependencies {

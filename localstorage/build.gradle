@@ -1,13 +1,12 @@
 plugins {
     id 'java'
     id 'checkstyle'
-    id 'com.github.johnrengelman.shadow' version '6.1.0'
+    id 'com.github.johnrengelman.shadow'
     id 'maven-publish'
     id 'signing'
 }
 
 group = 'eu.cyber-geiger'
-version = '0.3.0'
 description = 'localStorage'
 sourceCompatibility = '1.8'
 
