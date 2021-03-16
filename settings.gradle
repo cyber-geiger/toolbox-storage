@@ -1,0 +1,5 @@
+rootProject.name = 'toolbox-storage'
+
+include ':localstorage'
+project(':localstorage').projectDir = new File(settingsDir, 'localstorage')
+
