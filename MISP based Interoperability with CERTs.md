@@ -136,12 +136,12 @@ Both the conversation manipulated data and the client's specific information (un
 
 # **Mapping Module**
 The mapping component was developed to match between taxonomies of the Geiger and the CERT-RO. The process works in both ways, from Geiger to CERT-RO and vice versa.  Technical side: the service works as REST API, running on Azure App Service and always live to get requests and return responses. Calls can be sent to the same HTTP URL, and the service will know to classify whether it's a Geiger to CERT or CERT to Geiger.  Requests need to be sent with a key and a value:
-* Key: can be either **misp_taxonomy **or **geiger_taxonomy **
+* Key: can be either **misp_taxonomy** or **geiger_taxonomy**
 * Value can be any value that was pre-defined in the relevant key (misp or geiger)
 Then, the service matches the value on the right key-table and returns the correct value from the other key-table, together with the original request.
 
 Example for a CERT-RO to Geiger call:
-```JSON
+```javascript
 {
     "misp_taxonomy":"CERT-RO:compromised-resources=\"compromised-website\""
 }
