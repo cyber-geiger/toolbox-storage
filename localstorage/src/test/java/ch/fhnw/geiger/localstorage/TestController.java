@@ -32,6 +32,11 @@ public class TestController {
 
   StorageController controller;
 
+  /**
+   * Set up the controller for testing.
+   *
+   * @throws StorageException if controller could not be set up
+   */
   @Before
   public void setup() throws StorageException {
     // TODO add support for multiple mappers to ensure the same functionality with all mappers
@@ -85,7 +90,8 @@ public class TestController {
   @Test
   public void testStorageNodeUpdate() throws StorageException {
     // create original node
-    controller.add(new NodeImpl("parent1", ""));
+    Node parent = new NodeImpl("parent1", "");
+    controller.add(parent);
 
     // updated Node with different visibility children
     NodeImpl node = new NodeImpl("testNode1", ":parent1", Visibility.GREEN);
@@ -108,6 +114,17 @@ public class TestController {
     assertEquals(":parent1:testNode1", storedNode.getPath());
     assertEquals("testChild1", storedNode.getChildNodesCsv());
     assertSame(RED, storedNode.getVisibility());
+
+    // update parent
+    parent.addValue(new NodeValueImpl("somekey", "someValue"));
+    controller.update(parent);
+
+    // check children
+    Node storedChild = controller.get(":parent1:testNode1");
+    String[] children = storedChild.getChildNodesCsv().split(",");
+    assertEquals("check number of children", 1, children.length);
+    assertEquals("checking childnode", sn, storedChild.getChildren().values().toArray()[0]);
+
   }
 
   @Test
@@ -445,5 +462,34 @@ public class TestController {
 
     assertThrows(StorageException.class, () -> controller.get(":TestNode:node4"));
     assertFalse("Failed writing first time (wrong return value)", controller.addOrUpdate(n));
+  }
+
+  @Test
+  public void testOmittingChildrenOnUpdate() throws StorageException {
+    // testing if children are omitted when parent node is updated with skeleton childnodes
+    // this test is a result of a bug found in GeigerIndicator
+
+    // building the necessary nodes
+    Node plugin = new NodeImpl(":Local:plugin");
+    controller.add(plugin);
+    // add plugin children
+    Node pluginChild0 = new NodeImpl(":Local:plugin:child0");
+    Node pluginChild1 = new NodeImpl(":Local:plugin:child1");
+    controller.add(pluginChild0);
+    controller.add(pluginChild1);
+
+    // this section did omit the children
+    Node localNode = controller.get(":Local");
+    NodeValue userId = new NodeValueImpl("currentUser", "328161f6-89bd-49f6-user-5a375ff56ana");
+    localNode.updateValue(userId);
+    NodeValue deviceId = new NodeValueImpl("currentDevice", "328161f6-89bd-49f6-dev1-5a375ff56ana");
+    localNode.updateValue(deviceId);
+    controller.update(localNode);
+
+
+    // this section threw the error
+    plugin = controller.get(":Local:plugin");
+    String[] children = plugin.getChildNodesCsv().split(",");
+    assertEquals("checking children", 2, children.length);
   }
 }

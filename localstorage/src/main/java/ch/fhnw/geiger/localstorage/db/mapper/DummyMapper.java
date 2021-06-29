@@ -7,6 +7,10 @@ import ch.fhnw.geiger.localstorage.db.GenericController;
 import ch.fhnw.geiger.localstorage.db.data.Node;
 import ch.fhnw.geiger.localstorage.db.data.NodeImpl;
 import ch.fhnw.geiger.localstorage.db.data.NodeValue;
+import ch.fhnw.geiger.totalcross.ByteArrayInputStream;
+import ch.fhnw.geiger.totalcross.ByteArrayOutputStream;
+import ch.fhnw.geiger.totalcross.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -167,6 +171,76 @@ public class DummyMapper extends AbstractMapper {
   public void zap() {
     synchronized (nodes) {
       nodes.clear();
+    }
+  }
+
+  /**
+   * <p>Saves the current state of the DummyMapper in a file.</p>
+   */
+  private void saveState() {
+    try {
+      ByteArrayOutputStream out = new ByteArrayOutputStream();
+      synchronized (nodes) {
+        for (Node n : nodes.values()) {
+          n.toByteArrayStream(out);
+        }
+      }
+      new File().writeAllBytes("DummyMapper.tmp.db", out.toByteArray());
+      // TODO renaming of Files is not available in wrapper
+      // File f = new File("DummyMapper.tmp.db");
+      // f.renameTo("DummyMapper.db");
+    } catch (IOException ioe) {
+      System.err.println("Could not store DummyMapper data");
+      ioe.printStackTrace();
+    } catch (Throwable throwable) {
+      System.err.print("Error while writting File");
+      throwable.printStackTrace();
+    }
+  }
+
+  /**
+   * <p>Restores the state of the DummyMapper from a previous saved state.</p>
+   */
+  private void restoreState() {
+    // check if either permanent or temporary file available
+    // TODO after file class is adapted
+    /*
+    File f = new File("DummyMapper.db");
+    if (!f.exists() || !f.canRead()) {
+      // check for temporary file
+      f = new File("DummyMapper.tmp.db");
+      if(!f.exists() || !f.canRead()) {
+        // Either files are corrupt or nothing has been stored
+        // -> create the files and finish
+        f.createNewFile();
+        // TODO how to exit here? throw exeption?
+      }
+    }*/
+
+    try {
+      //byte[] buff = new File().readAllBytes(f.getname());
+      byte[] buff = new File().readAllBytes("DummyMapper.db");
+      if (buff == null) {
+        buff = new byte[0];
+      }
+      ByteArrayInputStream in = new ByteArrayInputStream(buff);
+      Map<String, Node> restoredNodes = new HashMap<>();
+      try {
+        while (true) {
+          Node n = NodeImpl.fromByteArrayStream(in);
+          restoredNodes.put(n.getPath(), n);
+        }
+      } catch (IOException ioe) {
+        // last node reached so nothing to do
+      }
+      // add all restored nodes
+      synchronized (nodes) {
+        nodes.clear();
+        nodes.putAll(restoredNodes);
+      }
+    } catch (Throwable e) {
+      System.err.println("Could not read DummyMapper database file");
+      e.printStackTrace();
     }
   }
 }

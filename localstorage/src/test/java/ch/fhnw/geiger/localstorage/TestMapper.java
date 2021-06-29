@@ -337,4 +337,72 @@ public class TestMapper {
               new GenericController("theOwner", new DummyMapper()))));
     }
   }
+
+  @Test
+  public void testGetChildren() throws StorageException {
+    for (StorageMapper mapper : mapperList) {
+      System.out.println("## Testing mapper " + mapper + " in " + (new Object() {
+      }).getClass().getEnclosingMethod().getName());
+      // create Node with child and subchild
+      Node parent = new NodeImpl(":parent");
+      Node child = new NodeImpl("child", ":parent");
+      Node subChild0 = new NodeImpl("subChild", ":parent:child");
+      child.addChild(subChild0);
+      parent.addChild(child);
+      // add nodes
+      mapper.add(parent);
+      mapper.add(child);
+      mapper.add(subChild0);
+
+      Node storedParent = mapper.get(":parent");
+      assertEquals("checking child reference", parent.getChildNodesCsv(),
+          storedParent.getChildNodesCsv());
+      //assertEquals("checking stored child", child,
+      //    parent.getChildren().values().toArray()[0]);
+
+      Node storedChild = mapper.get(":parent:child");
+      assertEquals("checking subChild reference", child.getChildNodesCsv(),
+          storedChild.getChildNodesCsv());
+      //assertEquals("checking stored subChild", subChild0,
+      //   storedChild.getChildren().values().toArray()[0]);
+
+      Node storedSubChild = mapper.get(":parent:child:subChild");
+      assertEquals("checking child references", "",
+          storedSubChild.getChildNodesCsv());
+      assertEquals("checking subChild", subChild0, storedSubChild);
+
+      // add more subChilds
+      Node subChild1 = new NodeImpl("subChild1", ":parent:child");
+      Node subChild2 = new NodeImpl("subChild2", ":parent:child");
+      Node subChild3 = new NodeImpl("subChild3", ":parent:child");
+      child.addChild(subChild1);
+      child.addChild(subChild2);
+      child.addChild(subChild3);
+      mapper.update(child);
+      storedChild = mapper.get(":parent:child");
+      assertEquals("checking subChild reference", child.getChildNodesCsv(),
+          storedChild.getChildNodesCsv());
+      /*
+      int counter = 0;
+      for (Node n : child.getChildren().values()) {
+        assertEquals("checking stored subChild", n,
+            storedChild.getChildren().values().toArray()[counter]);
+        ++counter;
+      }*/
+
+      // update the parent
+      storedParent = mapper.get(":parent");
+      NodeValue value = new NodeValueImpl("someKey", "someValue");
+      storedParent.addValue(value);
+      mapper.update(storedParent);
+      storedParent = mapper.get(":parent");
+      // check references
+      assertEquals("checking parent references", parent.getChildNodesCsv(),
+          storedParent.getChildNodesCsv());
+      storedChild = mapper.get(":parent:child");
+      assertEquals("checking child references", child.getChildNodesCsv(),
+          storedChild.getChildNodesCsv());
+
+    }
+  }
 }
