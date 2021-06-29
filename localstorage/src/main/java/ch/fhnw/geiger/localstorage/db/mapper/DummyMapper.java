@@ -258,7 +258,7 @@ public class DummyMapper extends AbstractMapper {
         // nothing to do
       }
     });
-    persistence.setDaemon(true);
+    //persistence.setDaemon(true);
     persistence.start();
   }
 }

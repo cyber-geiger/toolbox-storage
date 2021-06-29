@@ -357,14 +357,14 @@ public class TestMapper {
       Node storedParent = mapper.get(":parent");
       assertEquals("checking child reference", parent.getChildNodesCsv(),
           storedParent.getChildNodesCsv());
-      //assertEquals("checking stored child", child,
-      //    parent.getChildren().values().toArray()[0]);
+      assertEquals("checking stored child", child,
+          parent.getChildren().values().toArray()[0]);
 
       Node storedChild = mapper.get(":parent:child");
       assertEquals("checking subChild reference", child.getChildNodesCsv(),
           storedChild.getChildNodesCsv());
-      //assertEquals("checking stored subChild", subChild0,
-      //   storedChild.getChildren().values().toArray()[0]);
+      assertEquals("checking stored subChild", subChild0,
+          storedChild.getChildren().values().toArray()[0]);
 
       Node storedSubChild = mapper.get(":parent:child:subChild");
       assertEquals("checking child references", "",
@@ -382,13 +382,13 @@ public class TestMapper {
       storedChild = mapper.get(":parent:child");
       assertEquals("checking subChild reference", child.getChildNodesCsv(),
           storedChild.getChildNodesCsv());
-      /*
+
       int counter = 0;
       for (Node n : child.getChildren().values()) {
         assertEquals("checking stored subChild", n,
             storedChild.getChildren().values().toArray()[counter]);
         ++counter;
-      }*/
+      }
 
       // update the parent
       storedParent = mapper.get(":parent");
