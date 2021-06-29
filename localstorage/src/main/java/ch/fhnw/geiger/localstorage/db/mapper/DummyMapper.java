@@ -243,4 +243,22 @@ public class DummyMapper extends AbstractMapper {
       e.printStackTrace();
     }
   }
+
+  /**
+   * Creates a daemon thread that stores DummyMapper data at least every 30s.
+   */
+  private void continuousPersistence() {
+    Thread persistence = new Thread(() -> {
+      saveState();
+      // wait
+      try {
+        // wait 30s
+        Thread.sleep(30000);
+      } catch (InterruptedException ie) {
+        // nothing to do
+      }
+    });
+    persistence.setDaemon(true);
+    persistence.start();
+  }
 }
