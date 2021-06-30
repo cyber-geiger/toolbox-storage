@@ -18,6 +18,8 @@ import java.util.Vector;
 
 /**
  * <p>A non-persisting dummy mapper for test purposes.</p>
+ * <p>
+ * TODO: remove tombstones after expiry.
  */
 public class DummyMapper extends AbstractMapper {
 
@@ -38,11 +40,27 @@ public class DummyMapper extends AbstractMapper {
     if (ret == null) {
       throw new StorageException("Node not found");
     }
+
     if (ret.isTombstone()) {
       Node returnNode = new NodeImpl(path, true);
       returnNode.setVisibility(ret.getVisibility());
       return returnNode;
     }
+
+    // Make sure that the controller is appropriately set
+    ret.setController(controller);
+
+    // updating the node with skeletonized children
+    Map<String, Node> m = ret.getChildren();
+    for (Node n : m.values()) {
+      ret.removeChild(n.getPath());
+      if(n.isTombstone()) {
+        ret.addChild(new NodeImpl(n.getPath(), true));
+      } else {
+        ret.addChild(new NodeImpl(n.getPath(), controller));
+      }
+    }
+
     return ret.deepClone();
   }
 
@@ -57,16 +75,26 @@ public class DummyMapper extends AbstractMapper {
         throw new StorageException("Skeleton nodes cannot be added.");
       }
 
+      // make sure that we do not modify the passed node
+      node = node.shallowClone();
+
       // check if parent node is available
       if (node.getParentPath() != null && !"".equals(node.getParentPath())) {
         if (nodes.get(node.getParentPath()) == null) {
           throw new StorageException("Parent node \"" + node.getParentPath() + "\" does not exist");
         }
         // add reference to parent
-        nodes.get(node.getParentPath()).addChild(node);
+        nodes.get(node.getParentPath()).addChild(((NodeImpl) (node)).skeletonClone(controller));
       }
+
+      // removing all children before adding
+      for (String childName : node.getChildren().keySet()) {
+        node.removeChild(childName);
+      }
+
       // add node
       nodes.put(node.getPath(), node.shallowClone());
+
     }
   }
 
@@ -113,26 +141,53 @@ public class DummyMapper extends AbstractMapper {
 
       // remove old node
       delete(oldNode.getPath());
+
+      // update child nodes in parents
+      if (oldNode.getParentPath() != null && "".equals(oldNode.getParentPath())) {
+        Node parentNode = nodes.get(oldNode.getParentPath());
+        parentNode.removeChild(oldNode.getPath());
+      }
+      if (oldNode.getParentPath() != null && "".equals(oldNode.getParentPath())) {
+        Node parentNode = nodes.get(oldNode.getParentPath());
+        parentNode.addChild(newNode.skeletonClone(null));
+      }
+
     }
   }
 
   @Override
   public Node delete(String nodeName) throws StorageException {
     synchronized (nodes) {
-      if (nodes.get(nodeName) == null) {
+      Node currentNode = nodes.get(nodeName);
+      if (currentNode == null) {
         throw new StorageException("Node does not exist");
       }
-      if (!"".equals(nodes.get(nodeName).getChildNodesCsv())) {
-        throw new StorageException("Node does have children... cannot remove " + nodeName);
+      // test for non-tombstone children
+      for (Map.Entry<String, Node> c : currentNode.getChildren().entrySet()) {
+        if (!c.getValue().isTombstone()) {
+          throw new StorageException("Node does have children... cannot remove " + nodeName + " (child "
+              + c.getValue().getPath() + " exists)");
+        }
       }
       Node n = nodes.remove(nodeName);
-      // add tombstone
+
+      // remove child tombstone
+      for (Map.Entry<String, Node> c : currentNode.getChildren().entrySet()) {
+        nodes.remove(c.getValue().getPath());
+      }
+
+      // add tombstone for current node
       Node tombstone = new NodeImpl(n.getPath(), true);
       tombstone.setVisibility(n.getVisibility());
       nodes.put(n.getPath(), tombstone);
-      if (n.getParentPath() != null && !"".equals(n.getParentPath())) {
-        nodes.get(n.getParentPath()).removeChild(n.getName());
+
+      // update parent as tombstone
+      Node parent = nodes.get(currentNode.getParentPath());
+      if(parent!=null) {
+        parent.removeChild(currentNode.getName());
+        parent.addChild(tombstone);
       }
+
       return n;
     }
   }
@@ -186,7 +241,7 @@ public class DummyMapper extends AbstractMapper {
         }
       }
       new File().writeAllBytes("DummyMapper.tmp.db", out.toByteArray());
-      // TODO renaming of Files is not available in wrapper
+      // TODO: renaming of Files is not available in wrapper
       // File f = new File("DummyMapper.tmp.db");
       // f.renameTo("DummyMapper.db");
     } catch (IOException ioe) {
@@ -258,7 +313,7 @@ public class DummyMapper extends AbstractMapper {
         // nothing to do
       }
     });
-    //persistence.setDaemon(true);
+    persistence.setDaemon(true);
     persistence.start();
   }
 }

@@ -364,7 +364,7 @@ public class TestMapper {
       assertEquals("checking subChild reference", child.getChildNodesCsv(),
           storedChild.getChildNodesCsv());
       assertEquals("checking stored subChild", subChild0,
-          storedChild.getChildren().values().toArray()[0]);
+          mapper.get(":parent:child:subChild"));
 
       Node storedSubChild = mapper.get(":parent:child:subChild");
       assertEquals("checking child references", "",
@@ -383,12 +383,14 @@ public class TestMapper {
       assertEquals("checking subChild reference", child.getChildNodesCsv(),
           storedChild.getChildNodesCsv());
 
+      /* Removed as de-skeletonization is not available without controller
       int counter = 0;
       for (Node n : child.getChildren().values()) {
         assertEquals("checking stored subChild", n,
             storedChild.getChildren().values().toArray()[counter]);
         ++counter;
       }
+      */
 
       // update the parent
       storedParent = mapper.get(":parent");

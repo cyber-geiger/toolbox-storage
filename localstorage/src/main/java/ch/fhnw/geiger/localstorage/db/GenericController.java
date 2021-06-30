@@ -55,7 +55,6 @@ public class GenericController implements StorageController, ChangeRegistrar {
    *
    * @param owner  the owner to be used for all requests
    * @param mapper the database mapper to use
-   *
    * @throws StorageException In case of problems regarding the storage
    */
   public GenericController(String owner, StorageMapper mapper) throws StorageException {
@@ -78,7 +77,7 @@ public class GenericController implements StorageController, ChangeRegistrar {
   private void initMapper() throws StorageException {
     final String[] baseNodes = new String[]{
         "", ":Devices", ":Users", ":Enterprise", ":Keys", ":Global", ":Local"
-      };
+    };
     for (String nodeName : baseNodes) {
       try {
         // for correct path generation creation of a Node is needed
@@ -191,7 +190,9 @@ public class GenericController implements StorageController, ChangeRegistrar {
 
     // add child nodes
     for (Node n : node.getChildren().values()) {
-      mapper.add(n);
+      if (!n.isSkeleton()) {
+        mapper.add(n);
+      }
     }
 
     checkListeners(EventType.CREATE, null, node, null, null);

@@ -16,6 +16,7 @@ import ch.fhnw.geiger.localstorage.db.data.NodeValueImpl;
 import ch.fhnw.geiger.localstorage.db.mapper.DummyMapper;
 import ch.fhnw.geiger.localstorage.db.mapper.H2SqlMapper;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -168,9 +169,10 @@ public class TestController {
       // this is expected as the node has sub-nodes
     }
 
-    Collections.reverse(Arrays.asList(n));
-    for (NodeImpl tn : n) {
-      System.out.println("## removing node " + tn.getPath() + " (parent of "
+    List<NodeImpl> tearDown = Arrays.asList(n);
+    Collections.reverse(tearDown);
+    for (NodeImpl tn : tearDown) {
+      System.out.println("## removing node \"" + tn.getPath() + "\" (parent of "
           + tn.getParentPath() + ")");
       controller.delete(tn.getPath());
     }
@@ -490,6 +492,6 @@ public class TestController {
     // this section threw the error
     plugin = controller.get(":Local:plugin");
     String[] children = plugin.getChildNodesCsv().split(",");
-    assertEquals("checking children", 2, children.length);
+    assertEquals("checking children", 2, plugin.getChildren().size());
   }
 }

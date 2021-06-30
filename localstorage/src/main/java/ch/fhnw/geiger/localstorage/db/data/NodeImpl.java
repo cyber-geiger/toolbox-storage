@@ -152,7 +152,7 @@ public class NodeImpl implements Node {
    */
   private void init() throws StorageException {
     synchronized (skeleton) {
-      if (skeleton.get()) {
+      if (skeleton.get() && !isTombstone()) {
         // initialize with full object
         update(controller.get(getPath()));
         skeleton.set(false);
@@ -685,6 +685,17 @@ public class NodeImpl implements Node {
 
     // write object identifier as end tag
     SerializerHelper.writeLong(out, serialversionUID);
+  }
+
+  /**
+   * <p>Sekeletonizes an already materialized node.</p>
+   * @param controller the controller to be used for materialization of the skeleton
+   */
+  public Node skeletonClone(StorageController controller) {
+    if(controller==null) {
+      controller=getController();
+    }
+    return new NodeImpl(getPath(),controller);
   }
 
   /**
