@@ -14,7 +14,7 @@ public class Random {
   private long seed;
 
   public Random() {
-    this(ch.fhnw.geiger.totalcross.System.currentTimeMillis());
+    this(System.currentTimeMillis());
   }
 
   public Random(long seed) {
@@ -47,7 +47,7 @@ public class Random {
   }
 
   public int nextInt() {
-    return next(32);
+    return nextInt(Integer.MAX_VALUE);
   }
 
   protected synchronized int next(int bits) {
