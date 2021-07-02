@@ -690,6 +690,7 @@ public class NodeImpl implements Node {
   /**
    * <p>Sekeletonizes an already materialized node.</p>
    * @param controller the controller to be used for materialization of the skeleton
+   * @return the current node as skeleton
    */
   public Node skeletonClone(StorageController controller) {
     if(controller==null) {

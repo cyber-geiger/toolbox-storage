@@ -27,6 +27,8 @@ public class DummyMapper extends AbstractMapper {
 
   private StorageController controller = null;
 
+  private PersistenceThread persistence = null;
+
   @Override
   public void setController(StorageController controller) {
     this.controller = controller;
@@ -54,7 +56,7 @@ public class DummyMapper extends AbstractMapper {
     Map<String, Node> m = ret.getChildren();
     for (Node n : m.values()) {
       ret.removeChild(n.getPath());
-      if(n.isTombstone()) {
+      if (n.isTombstone()) {
         ret.addChild(new NodeImpl(n.getPath(), true));
       } else {
         ret.addChild(new NodeImpl(n.getPath(), controller));
@@ -183,7 +185,7 @@ public class DummyMapper extends AbstractMapper {
 
       // update parent as tombstone
       Node parent = nodes.get(currentNode.getParentPath());
-      if(parent!=null) {
+      if (parent != null) {
         parent.removeChild(currentNode.getName());
         parent.addChild(tombstone);
       }
@@ -214,12 +216,12 @@ public class DummyMapper extends AbstractMapper {
 
   @Override
   public void close() {
-    // not required for the dummy wrapper as there is no persistence
+    shutdown();
   }
 
   @Override
   public void flush() {
-    // not required for the dummy wrapper as there is no persistence
+    saveState();
   }
 
   @Override
@@ -299,21 +301,49 @@ public class DummyMapper extends AbstractMapper {
     }
   }
 
+  private class PersistenceThread extends Thread {
+    private boolean shutdown = false;
+
+    public void run() {
+      while (!shutdown) {
+        saveState();
+        // wait
+        try {
+          // wait 30s
+          Thread.sleep(30000);
+        } catch (InterruptedException ie) {
+          // nothing to do
+        }
+      }
+    }
+
+    public void shutdown() {
+      shutdown=true;
+      this.interrupt();
+      try {
+        this.join();
+      } catch (InterruptedException e) {
+        // ignore error message
+        //e.printStackTrace();
+      }
+    }
+  }
+
   /**
    * Creates a daemon thread that stores DummyMapper data at least every 30s.
    */
   private void continuousPersistence() {
-    Thread persistence = new Thread(() -> {
-      saveState();
-      // wait
-      try {
-        // wait 30s
-        Thread.sleep(30000);
-      } catch (InterruptedException ie) {
-        // nothing to do
-      }
-    });
-    persistence.setDaemon(true);
-    persistence.start();
+    if(persistence==null) {
+      persistence=new PersistenceThread();
+      persistence.start();
+    }
   }
+
+  public void shutdown() {
+    if(persistence!=null) {
+      persistence=new PersistenceThread();
+      persistence.shutdown();
+    }
+  }
+
 }
